@@ -3,6 +3,8 @@ import time
 from google import genai
 from telegram import Bot
 import asyncio
+import http.server
+import threading
 
 # =====================================================================
 # НАСТРОЙКИ И КЛЮЧИ (Считываются из скрытого раздела Environment)
@@ -17,8 +19,18 @@ SEARCH_QUERY = "general pediatrics clinical trials guidelines"
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
-# НАСТРОЙКА 1: Отдельное уникальное имя файла памяти для педиатрии
+# Уникальный файл памяти для педиатрии
 HISTORY_FILE = "published_history_general_pediatrics.txt"
+
+# ---------------------------------------------------------------------
+# ЗАГЛУШКА ДЛЯ ОБХОДА ПРОВЕРКИ ПОРТОВ RENDER (Имитируем веб-сайт)
+# ---------------------------------------------------------------------
+def run_dummy_server():
+    port = int(os.environ.get("PORT", 10000))
+    server_address = ('', port)
+    httpd = http.server.HTTPServer(server_address, http.server.SimpleHTTPRequestHandler)
+    print(f"🌐 Системный веб-порт {port} для ПЕДИАТРИИ успешно открыт.")
+    httpd.serve_forever()
 
 def load_history():
     if os.path.exists(HISTORY_FILE):
@@ -50,7 +62,7 @@ async def run_agent():
     prompt = f"""
     Используя свою фундаментальную академическую базу данных медицинских публикаций (PubMed, Cochrane, Embase), найди ОДНО самое важное и значимое клиническое исследование или руководство (guidelines) в области общей ПЕДИАТРИИ (тема: {SEARCH_QUERY}) за последние 5 лет (с 2021 по 2026 год).
     
-    ВАЖНОЕ УСЛОВИЕ: Полностью проигнорируй и НЕ выбирай статьи из этого списка (они уже были опубликованы):
+    ВАЖНОЕ УСЛОВИЕ: Полностью проигнорируй и НЕ выбирай статьи из этого списка:
     [{ignored_titles}]
     
     Напиши подробный структурированный клинический обзор этой статьи на РУССКОМ языке.
@@ -83,9 +95,11 @@ async def run_agent():
         print(f"🚨 Ошибка в цикле педиатрии: {e}")
 
 async def main():
+    # Запускаем фоновый веб-сервер для прохождения проверки портов Render
+    threading.Thread(target=run_dummy_server, daemon=True).start()
+    
     while True:
         await run_agent()
-        # НАСТРОЙКА 2: Спим ровно 24 часа для ежедневных публикаций
         print("⏳ Задача выполнена успешно. Следующий запуск ровно через 24 часа...")
         await asyncio.sleep(24 * 60 * 60)
 
