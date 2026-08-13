@@ -3,20 +3,34 @@ import time
 from google import genai
 from telegram import Bot
 import asyncio
+import http.server
+import threading
 
 # =====================================================================
 # НАСТРОЙКИ И КЛЮЧИ (Считываются из скрытого раздела Environment)
 # =====================================================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-TELEGRAM_BOT_TOKEN = "8974862777:AAGlmHU7AL65zRJDHTBIYrL9psUyorzWiPg"
-TELEGRAM_CHAT_ID = "-1003961458761"
+TELEGRAM_BOT_TOKEN = "ВАШ_ТОКЕН_БОТА"      # <--- Сюда вставьте ваш токен бота (в кавычках)
+TELEGRAM_CHAT_ID = "ВАШ_ЦИФРОВОЙ_ID"       # <--- Сюда вставьте ID вашего канала (-100...)
 
 SEARCH_QUERY = "infant complementary feeding introduction baby led weaning nutritional guidelines solid foods under 1 year" 
 
 # Инициализируем клиента Google и бота Telegram
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
+
 HISTORY_FILE = "published_history_baby_feeding.txt"
+
+# ---------------------------------------------------------------------
+# ЗАГЛУШКА ДЛЯ ОБХОДА ПРОВЕРКИ ПОРТОВ RENDER (Имитируем веб-сайт)
+# ---------------------------------------------------------------------
+def run_dummy_server():
+    port = int(os.environ.get("PORT", 10000))
+    server_address = ('', port)
+    httpd = http.server.HTTPServer(server_address, http.server.SimpleHTTPRequestHandler)
+    print(f"🌐 Системный веб-порт {port} успешно открыт для проверки Render.")
+    httpd.serve_forever()
+
 def load_history():
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
@@ -45,7 +59,7 @@ async def run_agent():
     ignored_titles = ", ".join(already_published) if already_published else "Пока нет"
     
     prompt = f"""
-    Используя свою фундаментальную академическую базу данных медицинских и нутрициологических публикаций (PubMed, Cochrane, Embase, гайдлайны WHO, ESPGHAN, AAP), найди ОДНО самое важное клиническое исследование, метаанализ или официальное руководство по теме ПРИКОРМА И ПИТАНИЯ ДЕТЕЙ ДО 1 ГОДА (тема: {SEARCH_QUERY}) за последние 5 лет (с 2021 по 2026 год).
+    Используя свою фундаментальную академическую базу данных медицинских и нутрициологических публикаций (PubMed, Cochrane, Embase, гайдлайны WHO, ESPGHAN, AAP), найди ОДНО самое важное клиническое исследование, метаанализ или официальное руководство по тему ПРИКОРМА И ПИТАНИЯ ДЕТЕЙ ДО 1 ГОДА (тема: {SEARCH_QUERY}) за последние 5 лет (с 2021 по 2026 год).
     
     ВАЖНОЕ УСЛОВИЕ: Полностью проигнорируй и НЕ выбирай статьи из этого списка:
     [{ignored_titles}]
@@ -74,16 +88,18 @@ async def run_agent():
             await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=clean_post)
             print("✅ Статья успешно опубликована в Telegram!")
             
-            first_line = clean_post.split("\n")[0]
+            first_line = clean_post.split("\n")
             save_to_history(first_line) 
     except Exception as e:
         print(f"🚨 Ошибка в цикле: {e}")
 
 async def main():
+    # Запускаем фоновый веб-сервер в отдельном потоке, чтобы Render был доволен
+    threading.Thread(target=run_dummy_server, daemon=True).start()
+    
     while True:
         await run_agent()
-        print("⏳ Задача выполнена успешно. Следующий запуск ровно через 48 часов...")
-        # Спим 24 часа (24 часа * 60 минут * 60 секунд)
+        print("⏳ Задача выполнена успешно. Следующий запуск ровно через 24 часа...")
         await asyncio.sleep(24 * 60 * 60)
 
 if __name__ == "__main__":
