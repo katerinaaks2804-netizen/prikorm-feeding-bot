@@ -20,11 +20,25 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 HISTORY_FILE = "published_history_general_pediatrics.txt"
 
+# Глобальная переменная, чтобы хранить последний текст для вывода в браузер
+LATEST_DIGEST_TEXT = "Робот запущен. Идет генерация первой статьи, подождите..."
+
+# ---------------------------------------------------------------------
+# СЕРВЕР-ВЕРИФИКАТОР ПОРТОВ (Теперь выводит статью прямо в браузер!)
+# ---------------------------------------------------------------------
+class CustomHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain; charset=utf-8")
+        self.end_headers()
+        # Выводим на экран текст статьи, чтобы вы могли читать её с iPad
+        self.wfile.write(LATEST_DIGEST_TEXT.encode('utf-8'))
+
 def run_dummy_server():
     port = int(os.environ.get("PORT", 10000))
     server_address = ('', port)
-    httpd = http.server.HTTPServer(server_address, http.server.SimpleHTTPRequestHandler)
-    print(f"🌐 Системный веб-порт {port} для ПЕДИАТРИИ успешно открыт.")
+    httpd = http.server.HTTPServer(server_address, CustomHandler)
+    print(f"🌐 Системный веб-порт {port} успешно открыт.")
     httpd.serve_forever()
 
 def load_history():
@@ -51,6 +65,7 @@ async def generate_with_retry_protection(prompt):
     raise Exception("🚨 Все модели Google перегружены.")
 
 async def run_agent():
+    global LATEST_DIGEST_TEXT
     print(f"🚀 ИИ-Агент по педиатрии запускает цикл поиска новой статьи...")
     
     already_published = load_history()
@@ -84,17 +99,19 @@ async def run_agent():
         clean_post = full_text.strip()
         
         if len(clean_post) > 50:
-            print(f"📨 Попытка отправки обзора в Telegram (ID: {TELEGRAM_CHAT_ID})...")
+            LATEST_DIGEST_TEXT = clean_post  # Сохраняем для вывода на экран
+            
+            print(f"📨 Отправляю обзор в Telegram (ID: {TELEGRAM_CHAT_ID})...")
             await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=clean_post)
             print("✅ ПОСТ УСПЕШНО ДОСТАВЛЕН В ТЕЛЕГРАМ-КАНАЛ!")
             
             first_line = clean_post.split("\n")[0]
             save_to_history(first_line)
-            print(f"💾 Заголовок '{first_line[:30]}...' успешно сохранен в историю.")
+            print(f"💾 Успешно сохранено в историю.")
         else:
-            print("⚠️ ИИ сгенерировал слишком короткий или пустой текст.")
+            print("⚠️ ИИ сгенерировал пустой текст.")
     except Exception as e:
-        print(f"❌ КРИТИЧЕСКАЯ ОШИБКА ПРИ ОБРАБОТКЕ ИЛИ ОТПРАВКЕ: {e}")
+        print(f"❌ КРИТИЧЕСКАЯ ОШИБКА ОБРАБОТКИ ИЛИ ОТПРАВКИ: {e}")
 
 async def main():
     threading.Thread(target=run_dummy_server, daemon=True).start()
