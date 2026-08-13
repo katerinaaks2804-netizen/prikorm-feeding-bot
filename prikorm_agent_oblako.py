@@ -16,6 +16,7 @@ SEARCH_QUERY = "infant complementary feeding introduction baby led weaning nutri
 # Инициализируем клиента Google и бота Telegram
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
+HISTORY_FILE = "published_history_baby_feeding.txt"
 def load_history():
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
