@@ -10,8 +10,8 @@ import threading
 # НАСТРОЙКИ И КЛЮЧИ (Считываются из скрытого раздела Environment)
 # =====================================================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-TELEGRAM_BOT_TOKEN = "8355385666:AAEZBbBlgeh1Mxy6uo2_lbKiM5-7w0Ka4HI"
-TELEGRAM_CHAT_ID = "-1004447211467"
+TELEGRAM_BOT_TOKEN = "8994835822:AAEstwCe5uYo3QH7c_9vmB8SRRLRJ09bZFc"
+TELEGRAM_CHAT_ID = "-1003977919330"
 
 SEARCH_QUERY = "general pediatrics clinical trials guidelines" 
 
