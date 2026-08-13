@@ -86,8 +86,8 @@ async def main():
     while True:
         await run_agent()
         print("⏳ Задача выполнена успешно. Следующий запуск ровно через 48 часов...")
-        # Спим 48 часов (48 часов * 60 минут * 60 секунд)
-        await asyncio.sleep(48 * 60 * 60)
+        # Спим 24 часа (24 часа * 60 минут * 60 секунд)
+        await asyncio.sleep(24 * 60 * 60)
 
 if __name__ == "__main__":
     asyncio.run(main())
