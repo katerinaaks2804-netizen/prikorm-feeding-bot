@@ -10,8 +10,8 @@ import threading
 # НАСТРОЙКИ И КЛЮЧИ (Считываются из скрытого раздела Environment)
 # =====================================================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-TELEGRAM_BOT_TOKEN = "ВАШ_ТОКЕН_БОТА"      # <--- Сюда вставьте ваш токен бота (в кавычках)
-TELEGRAM_CHAT_ID = "ВАШ_ЦИФРОВОЙ_ID"       # <--- Сюда вставьте ID вашего канала (-100...)
+TELEGRAM_BOT_TOKEN = "8974862777:AAGlmHU7AL65zRJDHTBIYrL9psUyorzWiPg"
+TELEGRAM_CHAT_ID = "-1003961458761"
 
 SEARCH_QUERY = "infant complementary feeding introduction baby led weaning nutritional guidelines solid foods under 1 year" 
 
