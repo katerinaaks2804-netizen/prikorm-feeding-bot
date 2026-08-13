@@ -14,11 +14,12 @@ TELEGRAM_CHAT_ID = "-1003977919330"
 
 SEARCH_QUERY = "general pediatrics clinical trials guidelines" 
 
+# Инициализируем клиентов
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
-HISTORY_FILE = "published_history_general_pediatrics_v3.txt"
-LATEST_DIGEST_TEXT = "Робот успешно подключен к облаку. Идет запуск цикла ИИ..."
+HISTORY_FILE = "published_history_general_pediatrics_v4.txt"
+LATEST_DIGEST_TEXT = "🚀 Сервер успешно запущен! ИИ-Агент начинает генерацию статьи..."
 
 def load_history():
     if os.path.exists(HISTORY_FILE):
@@ -39,16 +40,16 @@ async def generate_with_retry_protection(prompt):
             print(LATEST_DIGEST_TEXT)
             
             task = ai_client.models.generate_content(model=model_name, contents=prompt)
-            response = await asyncio.wait_for(asyncio.to_thread(lambda: task), timeout=45.0)
+            response = await asyncio.wait_for(asyncio.to_thread(lambda: task), timeout=40.0)
             return response.text
         except Exception as e:
-            print(f"⚠️ Модель {model_name} временно недоступна: {e}")
+            print(f"⚠️ Модель {model_name} временно недоступна. Ошибка: {e}")
             continue
     raise Exception("🚨 Все доступные модели Google сейчас перегружены.")
 
 async def run_agent():
     global LATEST_DIGEST_TEXT
-    LATEST_DIGEST_TEXT = "🚀 ИИ-Агент по педиатрии запускает цикл поиска новой статьи..."
+    LATEST_DIGEST_TEXT = "🔍 ИИ-Агент по педиатрии ищет новую уникальную статью..."
     print(LATEST_DIGEST_TEXT)
     
     already_published = load_history()
@@ -71,7 +72,7 @@ async def run_agent():
     
     - Суть исследования: (В 2-3 предложениях).
     - Ключевой результат: (Главный вывод исследования, важные цифры).
-    - Клиническое значение: (Как это знание применять на практике врачу-педиатру).
+    - Clinical Relevance: (Как это знание применять на практике врачу-педиатру).
     
     Оригинальное название на английском: (Точное название)
     Прямая ссылка на статью: (Интернет-ссылка на эту статью в PubMed)
@@ -90,25 +91,24 @@ async def run_agent():
             first_line = clean_post.split("\n")[0]
             save_to_history(first_line)
         else:
-            LATEST_DIGEST_TEXT = "⚠️ ИИ вернул слишком короткий текст. Пробую снова..."
+            LATEST_DIGEST_TEXT = "⚠️ ИИ вернул слишком короткий текст. Попробую позже."
     except Exception as e:
         LATEST_DIGEST_TEXT = f"❌ КРИТИЧЕСКАЯ ОШИБКА ОБРАБОТКИ ИЛИ ОТПРАВКИ: {e}"
         print(LATEST_DIGEST_TEXT)
 
 async def handle_request(request):
-    # Каждую минуту страница будет говорить браузеру автоматически обновиться (тег Refresh)
     html_content = f"""
     <html>
     <head>
         <meta charset="utf-8">
-        <meta http-equiv="refresh" content="30">
-        <title>ИИ-Агент: Общая педиатрия</title>
+        <meta http-equiv="refresh" content="15">
+        <title>Мониторинг Педиатрии</title>
     </head>
     <body style="font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; background: #f4f6f9;">
-        <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Мониторинг ИИ-Агента Педиатрии</h2>
-            <pre style="white-space: pre-wrap; font-size: 16px; color: #34495e;">{LATEST_DIGEST_TEXT}</pre>
-            <p style="font-size: 12px; color: #7f8c8d; margin-top: 30px; border-top: 1px solid #ecf0f1; padding-top: 10px;">Страница обновляется автоматически каждые 30 секунд.</p>
+        <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto;">
+            <h2 style="color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px;">🩺 ИИ-Агент: Общая педиатрия</h2>
+            <pre style="white-space: pre-wrap; font-size: 15px; color: #34495e; background: #fafafa; padding: 15px; border-radius: 4px; border: 1px solid #eee;">{LATEST_DIGEST_TEXT}</pre>
+            <p style="font-size: 11px; color: #95a5a6; margin-top: 20px; border-top: 1px solid #ecf0f1; padding-top: 10px;">Страница обновляется автоматически каждые 15 секунд.</p>
         </div>
     </body>
     </html>
@@ -116,25 +116,29 @@ async def handle_request(request):
     return web.Response(text=html_content, content_type='text/html')
 
 async def background_loop():
+    # Даем серверу Render 5 секунд, чтобы он гарантированно зафиксировал открытый порт
+    await asyncio.sleep(5)
     while True:
         await run_agent()
-        print("⏳ Задача выполнена успешно. Следующий запуск ровно через 24 часа...")
+        print("⏳ Задача выполнена успешно. Следующий запуск через 24 часа...")
         await asyncio.sleep(24 * 60 * 60)
 
 async def main():
     app = web.Application()
     app.router.add_get('/', handle_request)
     
-    # Запускаем фоновый цикл ИИ-агента как внутреннюю задачу aiohttp
-    app.on_startup.append(lambda a: asyncio.create_task(background_loop()))
+    # Сначала создаем фоновую задачу для ИИ
+    asyncio.create_task(background_loop())
     
+    # И ТУТ ЖЕ МГНОВЕННО запускаем веб-сервер, чтобы открыть порт в первую секунду!
     port = int(os.environ.get("PORT", 10000))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
+    print(f"🌐 СВЕРХСКОРОСТНОЙ ВЕБ-ПОРТ {port} ОТКРЫТ МГНОВЕННО!")
     
-    # Удерживаем сервер запущенным
+    # Держим сервер вечно активным
     while True:
         await asyncio.sleep(3600)
 
