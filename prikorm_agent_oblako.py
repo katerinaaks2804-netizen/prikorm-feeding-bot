@@ -5,21 +5,17 @@ from telegram import Bot
 import asyncio
 
 # =====================================================================
-# НАСТРОЙКИ И КЛЮЧИ (Вставьте ваши данные)
+# НАСТРОЙКИ И КЛЮЧИ (Считываются из скрытого раздела Environment)
 # =====================================================================
-AI_API_KEY = os.environ.get("GEMINI_API_KEY")        
-TELEGRAM_BOT_TOKEN = "8974862777:AAGlmHU7AL65zRJDHTBIYrL9psUyorzWiPg"         
-TELEGRAM_CHAT_ID = "-1003961458761"  
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+TELEGRAM_BOT_TOKEN = "8974862777:AAGlmHU7AL65zRJDHTBIYrL9psUyorzWiPg"
+TELEGRAM_CHAT_ID = "-1003961458761"
 
 SEARCH_QUERY = "infant complementary feeding introduction baby led weaning nutritional guidelines solid foods under 1 year" 
-AI_MODEL = "gemini-3.5-flash"
 
+# Инициализируем клиента Google и бота Telegram
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
-
-# В облаке мы сохраняем историю в текущую папку скрипта
-HISTORY_FILE = "published_history_baby_feeding.txt"
-
 def load_history():
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
