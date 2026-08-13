@@ -7,7 +7,7 @@ import asyncio
 # =====================================================================
 # НАСТРОЙКИ И КЛЮЧИ (Вставьте ваши данные)
 # =====================================================================
-GEMINI_API_KEY = "AQ.Ab8RN6KZlJ5H_dZmY0TxkA3f0yPKWTTEJAIjVT3OaU71Zmjv-w"          
+AI_API_KEY = os.environ.get("GEMINI_API_KEY")        
 TELEGRAM_BOT_TOKEN = "8974862777:AAGlmHU7AL65zRJDHTBIYrL9psUyorzWiPg"         
 TELEGRAM_CHAT_ID = "-1003961458761"  
 
