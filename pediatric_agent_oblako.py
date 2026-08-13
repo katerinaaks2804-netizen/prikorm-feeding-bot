@@ -18,7 +18,7 @@ SEARCH_QUERY = "general pediatrics clinical trials guidelines"
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
-HISTORY_FILE = "published_history_general_pediatrics.txt"
+HISTORY_FILE = "published_history_general_pediatrics2.txt"
 
 # Глобальная переменная, чтобы хранить последний текст для вывода в браузер
 LATEST_DIGEST_TEXT = "Робот запущен. Идет генерация первой статьи, подождите..."
