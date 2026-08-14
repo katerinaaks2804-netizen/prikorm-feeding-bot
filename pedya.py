@@ -14,7 +14,6 @@ TELEGRAM_CHAT_ID = "-1003977919330"
 
 SEARCH_QUERY = "general pediatrics clinical trials guidelines" 
 
-# Инициализируем клиентов
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
@@ -72,10 +71,10 @@ async def run_agent():
     
     - Суть исследования: (В 2-3 предложениях).
     - Ключевой результат: (Главный вывод исследования, важные цифры).
-    - Clinical Relevance: (Как это знание применять на практике врачу-педиатру).
+    - Клиническое значение: (Как это знание применять на практике врачу-педиатру).
     
     Оригинальное название на английском: (Точное название)
-    Прямая ссылка на статью: (Интернет-ссылка на эту статью в PubMed)
+    Прямая ссылка на статью: (Internet-ссылка на эту статью в PubMed)
     """
 
     try:
@@ -88,13 +87,16 @@ async def run_agent():
             await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=clean_post)
             print("✅ ПОСТ УСПЕШНО ДОСТАВЛЕН В ТЕЛЕГРАМ-КАНАЛ!")
             
-            first_line = clean_post.split("\n")[0]
+            first_line = clean_post.split("\n")
             save_to_history(first_line)
+            return True  # Возвращаем True, если публикация прошла успешно
         else:
-            LATEST_DIGEST_TEXT = "⚠️ ИИ вернул слишком короткий текст. Попробую позже."
+            LATEST_DIGEST_TEXT = "⚠️ ИИ вернул слишком короткий текст."
+            return False
     except Exception as e:
-        LATEST_DIGEST_TEXT = f"❌ КРИТИЧЕСКАЯ ОШИБКА ОБРАБОТКИ ИЛИ ОТПРАВКИ: {e}"
+        LATEST_DIGEST_TEXT = f"❌ ОШИБКА СЕТИ ИЛИ ПЕРЕГРУЗКА: {e}"
         print(LATEST_DIGEST_TEXT)
+        return False  # Возвращаем False при любой ошибке, чтобы запустить повтор
 
 async def handle_request(request):
     html_content = f"""
@@ -116,29 +118,33 @@ async def handle_request(request):
     return web.Response(text=html_content, content_type='text/html')
 
 async def background_loop():
-    # Даем серверу Render 5 секунд, чтобы он гарантированно зафиксировал открытый порт
     await asyncio.sleep(5)
     while True:
-        await run_agent()
-        print("⏳ Задача выполнена успешно. Следующий запуск через 24 часа...")
-        await asyncio.sleep(24 * 60 * 60)
+        # Пытаемся опубликовать статью
+        success = await run_agent()
+        
+        if success:
+            # Если всё прошло успешно, спокойно спим 24 часа до следующего дня
+            print("⏳ Задача выполнена успешно. Следующий запуск через 24 часа...")
+            await asyncio.sleep(24 * 60 * 60)
+        else:
+            # А ВОТ И НАША ЗАЩИТА: Если была перегрузка, пишем отчет, ждем 10 минут и пробуем снова!
+            global LATEST_DIGEST_TEXT
+            LATEST_DIGEST_TEXT += "\n\n⚠️ Сервера Google сейчас заняты. Включена автозащита: я подожду 10 минут и повторю попытку..."
+            print("⚠️ Сбой из-за перегрузки. Жду 10 минут до автоматического повтора...")
+            await asyncio.sleep(10 * 60) # Спим 10 минут (10 минут * 60 секунд)
 
 async def main():
     app = web.Application()
     app.router.add_get('/', handle_request)
-    
-    # Сначала создаем фоновую задачу для ИИ
     asyncio.create_task(background_loop())
     
-    # И ТУТ ЖЕ МГНОВЕННО запускаем веб-сервер, чтобы открыть порт в первую секунду!
     port = int(os.environ.get("PORT", 10000))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
-    print(f"🌐 СВЕРХСКОРОСТНОЙ ВЕБ-ПОРТ {port} ОТКРЫТ МГНОВЕННО!")
     
-    # Держим сервер вечно активным
     while True:
         await asyncio.sleep(3600)
 
