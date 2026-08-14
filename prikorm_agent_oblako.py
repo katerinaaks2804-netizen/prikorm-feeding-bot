@@ -4,24 +4,21 @@ from google import genai
 from telegram import Bot
 import asyncio
 from aiohttp import web
-import threading
 
 # =====================================================================
 # НАСТРОЙКИ И КЛЮЧИ (Считываются из скрытого раздела Environment)
 # =====================================================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-TELEGRAM_BOT_TOKEN = "8094035022:AAE_stwCe5uYoJQ17c_9vmB0SRRLRJ09bZc" # Тот же бот     
-TELEGRAM_CHAT_ID = "ID_КАНАЛА_ПО_ПРИКОРМУ" # <--- Сюда вставьте ID канала вашей ПОДРУГИ (с -100...)
+TELEGRAM_BOT_TOKEN = "8974862777:AAGlmHU7AL65zRJDHTBIYrL9psUyorzWiPg"     
+TELEGRAM_CHAT_ID = "-1003961458761" 
 
-# Запрос сфокусирован именно на прикорме до 1 года
 SEARCH_QUERY = "infant complementary feeding introduction baby led weaning nutritional guidelines solid foods under 1 year" 
 
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
-# НАСТРОЙКА 1: Отдельный файл истории для прикорма, чтобы темы не путались
 HISTORY_FILE = "published_history_baby_feeding_v5.txt"
-LATEST_DIGEST_TEXT = "🚀 Сервер прикорма успешно запущен! ИИ-Агент начинает генерацию статьи..."
+LATEST_DIGEST_TEXT = "🚀 Сервер успешно запущен! ИИ-Агент начинает генерацию статьи..."
 
 def load_history():
     if os.path.exists(HISTORY_FILE):
@@ -51,15 +48,14 @@ async def generate_with_retry_protection(prompt):
 
 async def run_agent():
     global LATEST_DIGEST_TEXT
-    LATEST_DIGEST_TEXT = "🔍 ИИ-Агент ищет новое исследование по прикорму до 1 года..."
+    LATEST_DIGEST_TEXT = "🔍 ИИ-Агент по педиатрии ищет новую уникальную статью..."
     print(LATEST_DIGEST_TEXT)
     
     already_published = load_history()
     ignored_titles = ", ".join(already_published) if already_published else "Пока нет"
     
-    # Промпт адаптирован специально под детское питание и ВОЗ
     prompt = f"""
-    Используя свою фундаментальную академическую базу данных медицинских и нутрициологических публикаций (PubMed, Cochrane, Embase, гайдлайны WHO, ESPGHAN, AAP), найди ОДНО самое важное клиническое исследование, метаанализ или официальное руководство по теме ПРИКОРМА И ПИТАНИЯ ДЕТЕЙ ДО 1 ГОДА за последние 5 лет (с 2021 по 2026 год).
+    Используя свою фундаментальную академическую базу данных медицинских публикаций (PubMed, Cochrane, Embase), найди ОДНО самое важное и значимое руководство (guidelines) или исследование в области общей ПЕДИАТРИИ за последние 5 лет (с 2021 по 2026 год).
     Тема: {SEARCH_QUERY}
     
     ВАЖНОЕ УСЛОВИЕ: Полностью проигнорируй и НЕ выбирай статьи из этого списка:
@@ -73,12 +69,12 @@ async def run_agent():
     [ДАТА ПУБЛИКАЦИИ: Месяц и год]
     [НАЗВАНИЕ СТАТЬИ НА РУССКОМ ЯЗЫКЕ]
     
-    - Суть исследования/руководства: (В 2-3 предложениях: какие методы, группа детей, продукты).
-    - Ключевой результат: (Главный вывод исследования, важные цифры, дозировки или сроки).
-    - Практическое значение: (Как это знание применять на практике врачу-педиатру, диетологу или маме).
+    - Суть исследования: (В 2-3 предложениях).
+    - Ключевой результат: (Главный вывод исследования, важные цифры).
+    - Клиническое значение: (Как это знание применять на практике врачу-педиатру).
     
     Оригинальное название на английском: (Точное название)
-    Прямая ссылка на статью: (Интернет-ссылка на эту статью в PubMed)
+    Прямая ссылка на статью: (Internet-ссылка на эту статью в PubMed)
     """
 
     try:
@@ -93,25 +89,27 @@ async def run_agent():
             
             first_line = clean_post.split("\n")
             save_to_history(first_line)
+            return True  # Возвращаем True, если публикация прошла успешно
         else:
-            LATEST_DIGEST_TEXT = "⚠️ ИИ вернул слишком короткий текст. Попробую позже."
+            LATEST_DIGEST_TEXT = "⚠️ ИИ вернул слишком короткий текст."
+            return False
     except Exception as e:
-        LATEST_DIGEST_TEXT = f"❌ КРИТИЧЕСКАЯ ОШИБКА ОБРАБОТКИ ИЛИ ОТПРАВКИ: {e}"
+        LATEST_DIGEST_TEXT = f"❌ ОШИБКА СЕТИ ИЛИ ПЕРЕГРУЗКА: {e}"
         print(LATEST_DIGEST_TEXT)
+        return False  # Возвращаем False при любой ошибке, чтобы запустить повтор
 
 async def handle_request(request):
-    # НАСТРОЙКА 2: Красивый заголовок страницы мониторинга именно для прикорма
     html_content = f"""
     <html>
     <head>
         <meta charset="utf-8">
         <meta http-equiv="refresh" content="15">
-        <title>Мониторинг Прикорма</title>
+        <title>Мониторинг Педиатрии</title>
     </head>
     <body style="font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; background: #f4f6f9;">
         <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto;">
-            <h2 style="color: #2c3e50; border-bottom: 2px solid #e67e22; padding-bottom: 10px;">🍏 ИИ-Агент: Прикорм детей до 1 года</h2>
-            <pre style="white-space: pre-wrap; font-size: 15px; color: #34495e; background: #fafafa; padding: 15px; border-radius: 4px; border: 1px solid #eee;">{LATEST_DIGEST_TEXT}</pre>
+            <h2 style="color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px;">🩺 ИИ-Агент: Прикорм детей до 1 года</h2>
+            <pre style="white-space: pre-wrap; font-size: 15px; color: #e67e22; background: #fafafa; padding: 15px; border-radius: 4px; border: 1px solid #eee;">{LATEST_DIGEST_TEXT}</pre>
             <p style="font-size: 11px; color: #95a5a6; margin-top: 20px; border-top: 1px solid #ecf0f1; padding-top: 10px;">Страница обновляется автоматически каждые 15 секунд.</p>
         </div>
     </body>
@@ -122,9 +120,19 @@ async def handle_request(request):
 async def background_loop():
     await asyncio.sleep(5)
     while True:
-        await run_agent()
-        print("⏳ Задача выполнена успешно. Следующий запуск через 24 часа...")
-        await asyncio.sleep(24 * 60 * 60)
+        # Пытаемся опубликовать статью
+        success = await run_agent()
+        
+        if success:
+            # Если всё прошло успешно, спокойно спим 24 часа до следующего дня
+            print("⏳ Задача выполнена успешно. Следующий запуск через 24 часа...")
+            await asyncio.sleep(24 * 60 * 60)
+        else:
+            # А ВОТ И НАША ЗАЩИТА: Если была перегрузка, пишем отчет, ждем 10 минут и пробуем снова!
+            global LATEST_DIGEST_TEXT
+            LATEST_DIGEST_TEXT += "\n\n⚠️ Сервера Google сейчас заняты. Включена автозащита: я подожду 10 минут и повторю попытку..."
+            print("⚠️ Сбой из-за перегрузки. Жду 10 минут до автоматического повтора...")
+            await asyncio.sleep(10 * 60) # Спим 10 минут (10 минут * 60 секунд)
 
 async def main():
     app = web.Application()
@@ -136,10 +144,10 @@ async def main():
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
-    print(f"🌐 СВЕРХСКОРОСТНОЙ ВЕБ-ПОРТ ПРИКОРМА {port} ОТКРЫТ МГНОВЕННО!")
     
     while True:
         await asyncio.sleep(3600)
 
 if __name__ == "__main__":
     asyncio.run(main())
+ 
