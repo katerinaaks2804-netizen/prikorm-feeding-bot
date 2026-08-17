@@ -54,7 +54,7 @@ async def run_agent():
     already_published = load_history()
     ignored_titles = ", ".join(already_published) if already_published else "Пока нет"
     
-        prompt = f"""
+    prompt = f"""
     Используя свою фундаментальную академическую базу данных медицинских и нутрициологических публикаций (PubMed, Cochrane, Embase, гайдлайны WHO, ESPGHAN, AAP), найди ОДНО самое важное клиническое исследование, метаанализ или официальное руководство по теме ПРИКОРМА И ПИТАНИЯ ДЕТЕЙ ДО 1 ГОДА за последние 5 лет (с 2021 по 2026 год).
     Тема: {SEARCH_QUERY}
     
