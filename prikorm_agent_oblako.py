@@ -31,7 +31,7 @@ def save_to_history(title):
         f.write(str(title) + "\n")
 
 async def generate_with_retry_protection(prompt):
-    models_to_try = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']
+    models_to_try = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-pro']
     for model_name in models_to_try:
         try:
             global LATEST_DIGEST_TEXT
