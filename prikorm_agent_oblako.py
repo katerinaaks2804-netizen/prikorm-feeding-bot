@@ -12,7 +12,7 @@ TELEGRAM_BOT_TOKEN = "8974862777:AAGlmHU7AL65zRJDHTBIYrL9psUyorzWiPg"
 TELEGRAM_CHAT_ID = "-1003961458761"
 
 # Поиск строго по авторитетным базам гайдлайнов
-SEARCH_QUERY = "CDC Infant Toddler Nutrition, AAP HealthyChildren solid foods, NHS Start for Life Weaning, ESPGHAN complementary feeding position paper guidelines"
+SEARCH_QUERY = "infant complementary feeding, baby-led weaning BLW, introducing allergenic foods peanuts eggs, safety chewing solid food textures gagging, iron-rich foods for babies, portion sizes under 1 year"
 
 ai_client = genai.Client()
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
